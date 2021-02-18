@@ -128,10 +128,15 @@ async function createJWS() {
 
 	var signer = new Jose.JoseJWS.Signer(cryptographer);
 
+	var jkuLink = document.location.href.split("/");
+	jkuLink.pop();
+	jkuLink.push("jwks.json");
+	var jkuLinkConstructed = jkuLink.join("/");
+
 	var jwsHeader = {
 		alg: 'ES256',
 		typ: 'JWT',
-		jku: location.origin + '/jwks.json'		
+		jku: jkuLinkConstructed
 	}
 
 	var signers = [];
