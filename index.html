@@ -188,6 +188,8 @@ async function verifyJWS() {
 	signtext.textContent += '\n\nverified: ' + JSON.stringify(verified, null, 4);	
 	if (verified[0].verified) {
 		alert("Verified! Message: " + jwtBody);
+	} else {
+		alert("Message encrypted with the wrong key or has been tampered with.");
 	}
 }
 
