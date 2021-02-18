@@ -145,7 +145,7 @@ async function createJWS() {
 	const message = await signer.sign(plaintext.value, null, {});
 
 	payload.value = message.CompactSerialize();
-	document.getElementById("qrcode").src = QR_CODE + encodeURIComponent(location.origin + "/#" + payload.value);
+	document.getElementById("qrcode").src = QR_CODE + encodeURIComponent(location.href + "#" + payload.value);
 	payloadLink.textContent = location.href + "#" + payload.value;
 	payloadLink.href = location.href + "#" + payload.value;
 
