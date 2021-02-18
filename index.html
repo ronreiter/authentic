@@ -146,8 +146,8 @@ async function createJWS() {
 
 	payload.value = message.CompactSerialize();
 	document.getElementById("qrcode").src = QR_CODE + encodeURIComponent(location.origin + "/#" + payload.value);
-	payloadLink.textContent = location.href + "/#" + payload.value;
-	payloadLink.href = location.href + "/#" + payload.value;
+	payloadLink.textContent = location.href + "#" + payload.value;
+	payloadLink.href = location.href + "#" + payload.value;
 
 	signtext.textContent = JSON.stringify(message, null, 4);
 
