@@ -18,7 +18,8 @@
 	<h1 class="title is-1">Authentic QR Code</h1>
 	<p>Click on Create JWS to encrypt a message to a QR code.</p>
 	<p>The message is digitally signed, and scanning the QR code will show the data and verify the signature.</p>
-	<p>The public key being used to verify the signature is encoded into the JWS token.</p>
+	<p>The link to the public key being used to verify the signature is encoded into the JWS token.</p>
+	<p>In general, the public key can either be embedded in the verification code, and the verification can be done offline. It is also safe to trust the public key download if the download is done via TLS.</p>
 	<div class="columns mt-5">
 		<div class="column">
 			<button class="button is-primary" onclick="createJWS()">Create JWS</button>
@@ -85,6 +86,7 @@
 		</div>
 		<div class="column">
 			<h3 class="title is-3">Private Key</h3>
+			<p>Note that signing with a new private key will not update the existing key in this demo, so verification won't work.</p>
 			<textarea class="input" style="height: 300px; font-family: monospace" id="privateKey">{
     "crv": "P-256",
     "d": "NivJ5wK6iis_oVC5g3xlCyYqdt_LW4RRa81JKD790po",
