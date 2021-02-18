@@ -128,7 +128,7 @@ async function createJWS() {
 
 	var signer = new Jose.JoseJWS.Signer(cryptographer);
 
-	var jkuLink = document.location.href.split("/");
+	var jkuLink = location.href.split("/");
 	jkuLink.pop();
 	jkuLink.push("jwks.json");
 	var jkuLinkConstructed = jkuLink.join("/");
@@ -146,8 +146,8 @@ async function createJWS() {
 
 	payload.value = message.CompactSerialize();
 	document.getElementById("qrcode").src = QR_CODE + encodeURIComponent(location.origin + "/#" + payload.value);
-	payloadLink.textContent = location.origin + "/#" + payload.value;
-	payloadLink.href = location.origin + "/#" + payload.value;
+	payloadLink.textContent = location.href + "/#" + payload.value;
+	payloadLink.href = location.href + "/#" + payload.value;
 
 	signtext.textContent = JSON.stringify(message, null, 4);
 
