@@ -16,9 +16,11 @@
 	<div class="container">
 
 	<h1 class="title is-1">QR Code Signature</h1>
-	<div class="columns">
+	<p>Click on Create JWS to encrypt a message to a QR code.</p>
+	<p>The message is digitally signed, and scanning the QR code will show the data and verify the signature.</p>
+	<p>The public key being used to verify the signature is encoded into the JWS token.</p>
+	<div class="columns mt-5">
 		<div class="column">
-			<button class="button is-primary" onclick="generate()">Generate Key</button>
 			<button class="button is-primary" onclick="createJWS()">Create JWS</button>
 			<button class="button is-primary" onclick="verifyJWS()">Verify JWS</button>
 		</div>
@@ -60,6 +62,12 @@
 		</div>
 	</div>
 
+	<div class="columns">
+		<div class="column">
+			<h3 class="title is-3">Keys</h3>
+			<button class="button is-primary" onclick="generate()">Generate Key</button>
+		</div>
+	</div>
 	<div class="columns">
 		<div class="column">
 			<h3 class="title is-3">Public Key</h3>
@@ -149,7 +157,7 @@ async function createJWS() {
 	payloadLink.textContent = location.href + "#" + payload.value;
 	payloadLink.href = location.href + "#" + payload.value;
 
-	signtext.textContent = JSON.stringify(message, null, 4);
+	signtext.textContent = JSON.stringify(message, null, 4) + '\n';
 
 	
 }
@@ -166,17 +174,16 @@ async function verifyJWS() {
 	const jwtHeader = JSON.parse(b64.decode(jwtParts[0]));
 	const jwtBody = b64.decode(jwtParts[1]);
 
+	signtext.textContent += "Downloading public key from: " + jwtHeader.jku + "\n";
 	var req = await fetch(jwtHeader.jku, {
 		mode: 'no-cors'
 	});
 	var reqData = await req.json();
-	console.log(reqData.keys);
 
 	var keyToUse = reqData.keys.filter(x=>x.kid === keyID);
 	if (keyToUse.length == 0) {
 		console.log("No key found");
 	}
-	console.log(keyToUse[0]);
 
 	let ecc_key = keyToUse[0];
 
@@ -185,7 +192,7 @@ async function verifyJWS() {
 	var verifier = new Jose.JoseJWS.Verifier(cryptographer, message);
 	await verifier.addRecipient(ecc_key, ecc_key.kid, "ES256");
 	const verified = await verifier.verify();
-	signtext.textContent += '\n\nverified: ' + JSON.stringify(verified, null, 4);	
+	signtext.textContent += 'verified: ' + JSON.stringify(verified, null, 4) + '\n';
 	if (verified[0].verified) {
 		alert("Verified! Message: " + jwtBody);
 	} else {
