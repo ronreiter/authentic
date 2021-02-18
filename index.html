@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hello Bulma!</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/js-jose/0.2.1/jose.min.js" integrity="sha512-lj9rt6iFr4vVtUrBGAwgb3aUFsTGsQjmWhkfbUDBCfPlfyZON+n4vWoGPfUV743fiq5u1ZCy2RJ5LYkwo/voMQ==" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js" integrity="sha512-nOQuvD9nKirvxDdvQ9OMqe2dgapbPB7vYAMrzJihw5m+aNcf0dX53m6YxM4LgA9u8e9eg9QX+/+mPu8kCNpV2A==" crossorigin="anonymous"></script>
+
+</head>
+
+<body>
+	<div class="container">
+
+	<h1 class="title is-1">QR Code Signature</h1>
+	<div class="columns">
+		<div class="column">
+			<button class="button is-primary" onclick="generate()">Generate Key</button>
+			<button class="button is-primary" onclick="createJWS()">Create JWS</button>
+			<button class="button is-primary" onclick="verifyJWS()">Verify JWS</button>
+		</div>
+	</div>
+
+	
+
+
+	<div class="columns">
+		<div class="column is-6">
+			<h3 class="title is-3">Data</h3>
+			<textarea class="input" style="height: 150px; font-family: monospace" id="plaintext">{"name": "Ron Reiter"}</textarea>
+		</div>
+		<div class="column is-6">
+			<h3 class="title is-3">Log</h3>
+			<pre class="input" style="height: 150px; overflow: scroll" id="signtext">
+				
+			</pre>
+		</div>
+	</div>	
+
+
+	<div class="columns">
+		<div class="column is-3">
+			<h3 class="title is-3">QR Code</h3>
+
+			<div id="qrcode_container">
+				<img id="qrcode" style="width: 100%">
+			</div>
+		</div>
+		<div class="column is-9">
+			<h3 class="title is-3">JWT Token</h3>
+
+			<textarea class="input" id="payload" style="height: 150px; width: 100%; font-family: monospace; overflow: scroll; word-wrap: break-word;">
+			</textarea>
+			<h3 class="title is-3 mt-5">JWT Verification Link</h3>
+			<a id="payloadLink" style="height: 150px; width: 100%; font-family: monospace; overflow: scroll; word-wrap: break-word;">
+			</a>
+		</div>
+	</div>
+
+	<div class="columns">
+		<div class="column">
+			<h3 class="title is-3">Public Key</h3>
+			<textarea class="input" style="height: 300px; font-family: monospace" id="publicKey">{
+    "crv": "P-256",
+    "ext": true,
+    "key_ops": [
+        "verify"
+    ],
+    "kty": "EC",
+    "x": "cKL90rXhrCykQ2GCA2lRHnZUVMXd5Eb2TqOVNDGOvIM",
+    "y": "vEpqVemRaFbUIclrX04z1177estVu9p-Kx01NDJYziY",
+    "kid": "123"
+}</textarea>
+		</div>
+		<div class="column">
+			<h3 class="title is-3">Private Key</h3>
+			<textarea class="input" style="height: 300px; font-family: monospace" id="privateKey">{
+    "crv": "P-256",
+    "d": "NivJ5wK6iis_oVC5g3xlCyYqdt_LW4RRa81JKD790po",
+    "ext": true,
+    "key_ops": [
+        "sign"
+    ],
+    "kty": "EC",
+    "x": "cKL90rXhrCykQ2GCA2lRHnZUVMXd5Eb2TqOVNDGOvIM",
+    "y": "vEpqVemRaFbUIclrX04z1177estVu9p-Kx01NDJYziY",
+    "kid": "123"
+}</textarea>
+		</div>
+	</div>
+
+	</div>
+
+<script>
+var QR_CODE = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=";
+var keyID = "123";
+
+var cryptographer = new Jose.WebCryptographer();
+cryptographer.setContentSignAlgorithm("ES256");
+
+b64 = new Jose.Utils.Base64Url()
+
+async function generate() {
+	// To create the key pair
+	var key = await crypto.subtle.generateKey({'name':'ECDSA','namedCurve':'P-256'}, true, ['sign', 'verify']);
+	let privateKeyData = await crypto.subtle.exportKey('jwk', key.privateKey);
+	let publicKeyData = await crypto.subtle.exportKey('jwk', key.publicKey);
+
+	privateKeyData.kid = keyID;
+	publicKeyData.kid = keyID;
+
+	document.getElementById("privateKey").value = JSON.stringify(privateKeyData, null, 4);
+	document.getElementById("publicKey").value = JSON.stringify(publicKeyData, null, 4);
+
+}
+
+async function createJWS() {
+	var plaintext = document.getElementById("plaintext");
+
+	var signtext = document.getElementById("signtext");
+	var payload = document.getElementById("payload");
+	var payloadLink = document.getElementById("payloadLink");
+
+	var ecc_private_key = JSON.parse(document.getElementById("privateKey").value);
+
+	var signer = new Jose.JoseJWS.Signer(cryptographer);
+
+	var jwsHeader = {
+		alg: 'ES256',
+		typ: 'JWT',
+		jku: location.origin + '/jwks.json'		
+	}
+
+	var signers = [];
+	await signer.addSigner(ecc_private_key, ecc_private_key.kid, jwsHeader);
+
+	const message = await signer.sign(plaintext.value, null, {});
+
+	payload.value = message.CompactSerialize();
+	document.getElementById("qrcode").src = QR_CODE + encodeURIComponent(location.origin + "/#" + payload.value);
+	payloadLink.textContent = location.origin + "/#" + payload.value;
+	payloadLink.href = location.origin + "/#" + payload.value;
+
+	signtext.textContent = JSON.stringify(message, null, 4);
+
+	
+}
+
+async function verifyJWS() {
+	// var ecc_key = JSON.parse(document.getElementById("publicKey").value);
+
+	var payload = document.getElementById("payload");
+	var signtext = document.getElementById("signtext");
+
+	const message = payload.value;
+
+	const jwtParts = message.split(".");
+	const jwtHeader = JSON.parse(b64.decode(jwtParts[0]));
+	const jwtBody = b64.decode(jwtParts[1]);
+
+	var req = await fetch(jwtHeader.jku, {
+		mode: 'no-cors'
+	});
+	var reqData = await req.json();
+	console.log(reqData.keys);
+
+	var keyToUse = reqData.keys.filter(x=>x.kid === keyID);
+	if (keyToUse.length == 0) {
+		console.log("No key found");
+	}
+	console.log(keyToUse[0]);
+
+	let ecc_key = keyToUse[0];
+
+
+
+	var verifier = new Jose.JoseJWS.Verifier(cryptographer, message);
+	await verifier.addRecipient(ecc_key, ecc_key.kid, "ES256");
+	const verified = await verifier.verify();
+	signtext.textContent += '\n\nverified: ' + JSON.stringify(verified, null, 4);	
+	if (verified[0].verified) {
+		alert("Verified! Message: " + jwtBody);
+	}
+}
+
+if (location.hash) {
+	var payload = document.getElementById("payload");
+	payload.value = location.hash.substring(1);
+	verifyJWS();
+}
+
+
+
+</script>
+</body>
+
+
+
+</html>
